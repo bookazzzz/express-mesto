@@ -1,5 +1,7 @@
 const express = require('express');
 const { PORT = 3000 } = process.env;
+const bodyParser = require('body-parser');
+const routes = require('./routes');
 
 const app = express();
 const mongoose = require("mongoose");
@@ -12,6 +14,8 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use(routes);
+app.use(bodyParser.json());
 
 mongoose.connect("mongodb://localhost:27017/mestodb", {
   useUnifiedTopology: true,
