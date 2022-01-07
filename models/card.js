@@ -5,6 +5,7 @@ const cardSchema = new mongoose.Schema({
     type: String,
     minlength: [2, "Минимальная длина поля 'name' - 2 символа."],
     maxlength: [30, "Максимальная длина поля 'name' - 30 символов."],
+    required: true
   },
   link: {
     type: String,
@@ -13,6 +14,7 @@ const cardSchema = new mongoose.Schema({
   owner: {
     type: mongoose.ObjectId,
     ref: "user",
+    required: true
   },
   likes: [{
     type: mongoose.ObjectId,
