@@ -1,11 +1,11 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
     minlength: [2, "Минимальная длина поля 'name' - 2 символа."],
     maxlength: [30, "Максимальная длина поля 'name' - 30 символов."],
-    required: true
+    required: true,
   },
   about: {
     type: String,
@@ -14,8 +14,8 @@ const userSchema = new mongoose.Schema({
   },
   avatar: {
     type: String,
-    required: true
+    required: true,
   },
 });
 
-module.exports = mongoose.model("user", userSchema);
+module.exports = mongoose.model('user', userSchema);
