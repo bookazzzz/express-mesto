@@ -6,19 +6,19 @@ const getUsers = (req, res) => User.find({})
   .then((users) => {
     res.status(200).send(users);
   })
-  .catch((err) => res.status(500).send({ message: 'Произошла ошибка' }));
+  .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
 
 // Получаем пользоватея по ID
 const getUser = (req, res) => {
-  const { id } = request.params;
+  const { _id } = request.params;
   return User
-    .findById(id)
+    .findById(_id)
     .then((user) => res.status(200).send(user))
     .catch((err) => {
       if (err.name === 'CastError') {
-        response.status(400).send({ message: `id: ${_id} не найден` });
+        res.status(400).send({ message: `id: ${_id} не найден` });
       } else {
-        response.status(500).send({ message: 'Произошла ошибка' });
+        res.status(500).send({ message: 'Произошла ошибка' });
       }
     });
 };
@@ -31,9 +31,9 @@ const createUser = (req, res) => {
     .then((user) => res.status(201).send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        response.status(400).send({ message: `${Object.values(err.errors).map((error) => error.message).join(', ')}` });
+        res.status(400).send({ message: 'Некорректные данные при создании пользователя.' });
       } else {
-        response.status(500).send({ message: 'Произошла ошибка' });
+        res.status(500).send({ message: 'Произошла ошибка' });
       }
     });
 };
@@ -54,15 +54,15 @@ const updateUser = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        response.status(400).send({ message: 'Некорректные данные при обновлении профиля.' });
+        res.status(400).send({ message: 'Некорректные данные при обновлении профиля.' });
       } else {
-        response.status(500).send({ message: 'Произошла ошибка' });
+        res.status(500).send({ message: 'Произошла ошибка' });
       }
     });
 };
 
 // Обновление аватара
-const updateUserAvatar = (req, res, next) => {
+const updateUserAvatar = (req, res) => {
   const { avatar } = req.body;
   const { _id } = req.user;
 
@@ -77,9 +77,9 @@ const updateUserAvatar = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        response.status(400).send({ message: 'Некорректные данные при обновлении аватара.' });
+        res.status(400).send({ message: 'Некорректные данные при обновлении аватара.' });
       } else {
-        response.status(500).send({ message: 'Произошла ошибка' });
+        res.status(500).send({ message: 'Произошла ошибка' });
       }
     });
 };

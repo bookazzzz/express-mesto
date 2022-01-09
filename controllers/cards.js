@@ -7,9 +7,9 @@ const getCards = (req, res) => {
     .then((card) => res.status(200).send(card))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        response.status(400).send({ message: 'Некорректные данные при получении карточек.' });
+        res.status(400).send({ message: 'Некорректные данные при получении карточек.' });
       } else {
-        response.status(500).send({ message: 'Произошла ошибка' });
+        res.status(500).send({ message: 'Произошла ошибка' });
       }
     });
 };
@@ -21,9 +21,9 @@ const createCard = (req, res) => {
     .then((card) => res.status(200).send(card))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        response.status(400).send({ message: 'Некорректные данные при создании карточки.' });
+        res.status(400).send({ message: 'Некорректные данные при создании карточки.' });
       } else {
-        response.status(500).send({ message: 'Произошла ошибка' });
+        res.status(500).send({ message: 'Произошла ошибка' });
       }
     });
 };
@@ -37,9 +37,9 @@ const likeCard = (req, res) => Card.findByIdAndUpdate(
   .then((card) => res.status(200).send(card))
   .catch((err) => {
     if (err.name === 'CastError') {
-      response.status(404).send({ message: 'Oops карточка с указанным id не найдена.' });
+      res.status(404).send({ message: 'Oops карточка с указанным id не найдена.' });
     } else {
-      response.status(500).send({ message: 'Произошла ошибка' });
+      res.status(500).send({ message: 'Произошла ошибка' });
     }
   });
 
@@ -48,9 +48,9 @@ const deleteCard = (req, res) => Card.findByIdAndRemove(req.params.id)
   .then((card) => res.status(200).send(card))
   .catch((err) => {
     if (err.name === 'CastError') {
-      response.status(404).send({ message: 'Oops карточка с указанным id не найдена.' });
+      res.status(404).send({ message: 'Oops карточка с указанным id не найдена.' });
     } else {
-      response.status(500).send({ message: 'Произошла ошибка' });
+      res.status(500).send({ message: 'Произошла ошибка' });
     }
   });
 
@@ -60,9 +60,9 @@ const dislikeCard = (req, res) => {
     .then((card) => res.status(200).send(card))
     .catch((err) => {
       if (err.name === 'CastError') {
-        response.status(404).send({ message: 'Oops карточка с указанным id не найдена.' });
+        res.status(404).send({ message: 'Oops карточка с указанным id не найдена.' });
       } else {
-        response.status(500).send({ message: 'Произошла ошибка' });
+        res.status(500).send({ message: 'Произошла ошибка' });
       }
     });
 };
