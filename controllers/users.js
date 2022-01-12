@@ -1,4 +1,3 @@
-const { request } = require('express');
 const User = require('../models/user');
 
 // Получаем всех пользователей
@@ -10,17 +9,20 @@ const getUsers = (req, res) => User.find({})
 
 // Получаем пользоватея по ID
 const getUser = (req, res) => {
-  const { _id } = request.params;
+  const { _id } = req.params;
   return User
     .findById(_id)
-    .then((user) => res.status(200).send(user))
+    .orFail(() => {throw new Error ('Нет пользователя с таким _id' )})
+    .then((user) => res.status(200).send({ user }))
     .catch((err) => {
-      if (err.name === 'CastError') {
-        res.status(400).send({ message: `id: ${_id} не найден` });
+      if (err.message === 'Нет пользователя с таким _id') {
+        res.status(404).send({ message: 'Нет пользователя с таким _id' });
+      } else if (err.name === 'CastError') {
+        res.status(400).send({ message: 'Ошибка в ID пользователя' });
       } else {
         res.status(500).send({ message: 'Произошла ошибка' });
       }
-    });
+    })
 };
 
 // Создаем пользователя
@@ -44,7 +46,8 @@ const updateUser = (req, res) => {
   const { _id } = req.user;
 
   return User
-    .findByIdAndUpdate(_id, { name, about })
+    .findByIdAndUpdate(_id, { name, about },{new: true})
+    .orFail(() => {throw new Error ('Страница с профилем не найдена' )})
     .then(({
       name, about, avatar, _id,
     }) => {
@@ -55,7 +58,9 @@ const updateUser = (req, res) => {
     .catch((err) => {
       if (err.name === 'ValidationError') {
         res.status(400).send({ message: 'Некорректные данные при обновлении профиля.' });
-      } else {
+      } else if (err.message === 'Страница с профилем не найдена') {
+        res.status(404).send({ message: 'Страница с профилем не найдена' }); }
+      else {
         res.status(500).send({ message: 'Произошла ошибка' });
       }
     });
@@ -67,7 +72,8 @@ const updateUserAvatar = (req, res) => {
   const { _id } = req.user;
 
   return User
-    .findByIdAndUpdate(_id, { avatar })
+    .findByIdAndUpdate(_id, { avatar }, {new: true})
+    .orFail(() => {throw new Error ('Страница с аватаром не найдена' )})
     .then(({
       name, about, avatar, _id,
     }) => {
@@ -78,6 +84,8 @@ const updateUserAvatar = (req, res) => {
     .catch((err) => {
       if (err.name === 'ValidationError') {
         res.status(400).send({ message: 'Некорректные данные при обновлении аватара.' });
+      } else if (err.message === 'Страница с аватаром не найдена') {
+        res.status(404).send({ message: 'Страница с аватаром не найдена' });
       } else {
         res.status(500).send({ message: 'Произошла ошибка' });
       }

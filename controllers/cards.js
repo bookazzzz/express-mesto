@@ -29,42 +29,54 @@ const createCard = (req, res) => {
 };
 
 // Лайк на карточку
-const likeCard = (req, res) => Card.findByIdAndUpdate(
+const likeCard = (req, res) => {
+  Card.findByIdAndUpdate(
   req.params.id,
   { $addToSet: { likes: req.user._id } },
-  { new: true },
-)
+  { new: true },)
+  .orFail(() => {throw new Error ('Oops не можем поставить лайк - ошибка 404' )})
   .then((card) => res.status(200).send(card))
   .catch((err) => {
-    if (err.name === 'CastError') {
-      res.status(404).send({ message: 'Oops карточка с указанным id не найдена.' });
+    if (err.message === 'Oops не можем поставить лайк - ошибка 404') {
+      res.status(404).send({ message: 'Oops не можем поставить лайк - ошибка 404' });
+    } else if (err.name === 'CastError') {
+      res.status(400).send({ message: 'Oops не можем поставить лайк - ошибка 400' });
     } else {
-      res.status(500).send({ message: 'Произошла ошибка' });
+      res.status(500).send({ message: 'Произошла ошибка сервера' });
     }
-  });
+  })
+};
 
 // Удаляем карточку
-const deleteCard = (req, res) => Card.findByIdAndRemove(req.params.id)
+const deleteCard = (req, res) => {
+  Card.findByIdAndRemove(req.params.id)
+  .orFail(() => {throw new Error ('Oops не можем удалить карточку - ошибка 404' )})
   .then((card) => res.status(200).send(card))
   .catch((err) => {
-    if (err.name === 'CastError') {
-      res.status(404).send({ message: 'Oops карточка с указанным id не найдена.' });
+    if (err.message === 'Oops не можем удалить карточку - ошибка 404') {
+      res.status(404).send({ message: 'Oops не можем удалить карточку - ошибка 404' });
+    } else if (err.name === 'CastError') {
+      res.status(400).send({ message: 'Oops не можем удалить карточку - ошибка 400' });
     } else {
-      res.status(500).send({ message: 'Произошла ошибка' });
+      res.status(500).send({ message: 'Произошла ошибка сервера' });
     }
-  });
+  })
+};
 
 // Удаяем лайк
 const dislikeCard = (req, res) => {
   Card.findByIdAndUpdate(req.params.id, { $pull: { likes: req.user._id } }, { new: true })
+    .orFail(() => {throw new Error ('Oops не можем удалить лайк - ошибка 404' )})
     .then((card) => res.status(200).send(card))
     .catch((err) => {
-      if (err.name === 'CastError') {
-        res.status(404).send({ message: 'Oops карточка с указанным id не найдена.' });
+      if (err.message === 'Oops не можем удалить лайк - ошибка 404') {
+        res.status(404).send({ message: 'Oops не можем удалить лайк - ошибка 404' });
+      } else if (err.name === 'CastError') {
+        res.status(400).send({ message: 'Oops не можем удалить лайк - ошибка 400' });
       } else {
-        res.status(500).send({ message: 'Произошла ошибка' });
+        res.status(500).send({ message: 'Произошла ошибка сервера' });
       }
-    });
+    })
 };
 
 module.exports = {
