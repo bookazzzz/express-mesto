@@ -12,7 +12,7 @@ const getUser = (req, res) => {
   const { _id } = req.params;
   return User
     .findById(_id)
-    .orFail(() => {throw new Error ('Нет пользователя с таким _id' )})
+    .orFail(() => { throw new Error('Нет пользователя с таким _id'); })
     .then((user) => res.status(200).send({ user }))
     .catch((err) => {
       if (err.message === 'Нет пользователя с таким _id') {
@@ -22,7 +22,7 @@ const getUser = (req, res) => {
       } else {
         res.status(500).send({ message: 'Произошла ошибка' });
       }
-    })
+    });
 };
 
 // Создаем пользователя
@@ -43,11 +43,10 @@ const createUser = (req, res) => {
 // Обновление профия
 const updateUser = (req, res) => {
   const { name, about } = req.body;
-  const { _id } = req.user;
 
-  return User
-    .findByIdAndUpdate(_id, { name, about },{new: true})
-    .orFail(() => {throw new Error ('Страница с профилем не найдена' )})
+  User
+    .findByIdAndUpdate(req.user._id, { name, about }, { new: true })
+    .orFail(() => { throw new Error('Страница с профилем не найдена'); })
     .then(({
       name, about, avatar, _id,
     }) => {
@@ -56,11 +55,11 @@ const updateUser = (req, res) => {
       });
     })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err.name === 'ValidationError' || err.name === 'CastError') {
         res.status(400).send({ message: 'Некорректные данные при обновлении профиля.' });
       } else if (err.message === 'Страница с профилем не найдена') {
-        res.status(404).send({ message: 'Страница с профилем не найдена' }); }
-      else {
+        res.status(404).send({ message: 'Страница с профилем не найдена' });
+      } else {
         res.status(500).send({ message: 'Произошла ошибка' });
       }
     });
@@ -72,8 +71,8 @@ const updateUserAvatar = (req, res) => {
   const { _id } = req.user;
 
   return User
-    .findByIdAndUpdate(_id, { avatar }, {new: true})
-    .orFail(() => {throw new Error ('Страница с аватаром не найдена' )})
+    .findByIdAndUpdate(_id, { avatar }, { new: true })
+    .orFail(() => { throw new Error('Страница с аватаром не найдена'); })
     .then(({
       name, about, avatar, _id,
     }) => {
@@ -82,7 +81,7 @@ const updateUserAvatar = (req, res) => {
       });
     })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err.name === 'ValidationError' || err.name === 'CastError') {
         res.status(400).send({ message: 'Некорректные данные при обновлении аватара.' });
       } else if (err.message === 'Страница с аватаром не найдена') {
         res.status(404).send({ message: 'Страница с аватаром не найдена' });
