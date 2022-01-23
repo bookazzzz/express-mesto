@@ -1,3 +1,5 @@
+const bcrypt = require('bcrypt');
+
 const User = require('../models/user');
 
 // Получаем всех пользователей
@@ -27,9 +29,27 @@ const getUser = (req, res) => {
 
 // Создаем пользователя
 const createUser = (req, res) => {
-  console.log(req.body);
-  return User
-    .create({ ...req.body })
+  const {
+    name,
+    about,
+    avatar,
+    email,
+    password,
+  } = req.body;
+  User.findOne({ email })
+    .then((user) => {
+      if (!user) {
+        Promise.reject(new Error('Неправильные почта или пароль'));
+      }
+    });
+  bcrypt.hash(password, 10) // хешируем пароль
+    .then((hash) => User.create({
+      name,
+      about,
+      avatar,
+      email,
+      password: hash,
+    }))
     .then((user) => res.status(201).send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
