@@ -1,7 +1,7 @@
 const Card = require('../models/card');
 
 // Получаем все карточки с сервера
-const getCards = (req, res) => {
+const getCards = (req, res, next) => {
   const { cardsList } = {};
   return Card.find(cardsList)
     .then((card) => res.status(200).send(card))
@@ -11,11 +11,12 @@ const getCards = (req, res) => {
       } else {
         res.status(500).send({ message: 'Произошла ошибка' });
       }
+      next();
     });
 };
 
 // Создаем карточку
-const createCard = (req, res) => {
+const createCard = (req, res, next) => {
   const { name, link } = req.body;
   return Card.create({ name, link, owner: req.user._id })
     .then((card) => res.status(200).send(card))
@@ -25,11 +26,12 @@ const createCard = (req, res) => {
       } else {
         res.status(500).send({ message: 'Произошла ошибка' });
       }
+      next();
     });
 };
 
 // Лайк на карточку
-const likeCard = (req, res) => {
+const likeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.id,
     { $addToSet: { likes: req.user._id } },
@@ -46,10 +48,11 @@ const likeCard = (req, res) => {
         res.status(500).send({ message: 'Произошла ошибка сервера' });
       }
     });
+  next();
 };
 
 // Удаляем карточку
-const deleteCard = (req, res) => {
+const deleteCard = (req, res, next) => {
   Card.findByIdAndRemove(req.params.id)
     .orFail(() => { throw new Error('Oops не можем удалить карточку - ошибка 404'); })
     .then((card) => res.status(200).send(card))
@@ -62,10 +65,11 @@ const deleteCard = (req, res) => {
         res.status(500).send({ message: 'Произошла ошибка сервера' });
       }
     });
+  next();
 };
 
 // Удаяем лайк
-const dislikeCard = (req, res) => {
+const dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(req.params.id, { $pull: { likes: req.user._id } }, { new: true })
     .orFail(() => { throw new Error('Oops не можем удалить лайк - ошибка 404'); })
     .then((card) => res.status(200).send(card))
@@ -78,6 +82,7 @@ const dislikeCard = (req, res) => {
         res.status(500).send({ message: 'Произошла ошибка сервера' });
       }
     });
+  next();
 };
 
 module.exports = {

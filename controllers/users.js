@@ -1,5 +1,5 @@
 const bcrypt = require('bcrypt');
-
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
 // Получаем всех пользователей
@@ -28,7 +28,7 @@ const getUser = (req, res) => {
 };
 
 // Создаем пользователя
-const createUser = (req, res) => {
+const createUser = (req, res, next) => {
   const {
     name,
     about,
@@ -58,10 +58,11 @@ const createUser = (req, res) => {
         res.status(500).send({ message: 'Произошла ошибка' });
       }
     });
+  next();
 };
 
 // Обновление профия
-const updateUser = (req, res) => {
+const updateUser = (req, res, next) => {
   const { name, about } = req.body;
 
   User
@@ -83,10 +84,11 @@ const updateUser = (req, res) => {
         res.status(500).send({ message: 'Произошла ошибка' });
       }
     });
+  next();
 };
 
 // Обновление аватара
-const updateUserAvatar = (req, res) => {
+const updateUserAvatar = (req, res, next) => {
   const { avatar } = req.body;
   const { _id } = req.user;
 
@@ -108,7 +110,49 @@ const updateUserAvatar = (req, res) => {
       } else {
         res.status(500).send({ message: 'Произошла ошибка' });
       }
+      next();
     });
+};
+
+// контроллер логина
+const login = (req, res, next) => {
+  const { email, password } = req.body;
+
+  User.findOne({ email }).select('+password')
+    .then((user) => {
+      if (!user) {
+        throw new Error('Неправильные почта или пароль');
+      }
+      return bcrypt.compare(password, user.password)
+        .then((matched) => {
+          if (!matched) {
+            throw new Error('Неправильные почта или пароль');
+          }
+
+          const { NODE_ENV, JWT_SECRET } = process.env;
+
+          const token = jwt.sign(
+            { _id: user._id },
+            NODE_ENV === 'production' ? JWT_SECRET : 'secret-key',
+            { expiresIn: '7d' },
+          );
+          return res
+            .cookie('jwt', token, {
+              maxAge: 3600000 * 24 * 7,
+              secure: true,
+              sameSite: 'none',
+            })
+            .send({ message: 'Вход совершен успешно' });
+        });
+    })
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        throw new Error('Поле email или password не должны быть пустыми');
+      } else {
+        res.status(401).send({ message: 'Отказ в доступе' });
+      }
+    });
+  next();
 };
 
 module.exports = {
@@ -117,4 +161,5 @@ module.exports = {
   createUser,
   updateUser,
   updateUserAvatar,
+  login,
 };
