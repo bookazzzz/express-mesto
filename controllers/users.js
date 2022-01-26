@@ -2,28 +2,37 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
+const BadRequest = require('../errors/BadRequest');
+const UnauthorizedError = require('../errors/unauthorizedError');
+const NotFoundError = require('../errors/pageNotFoundError');
+const ConflictError = require('../errors/ConflictError');
+
 // Получаем всех пользователей
-const getUsers = (req, res) => User.find({})
-  .then((users) => {
-    res.status(200).send(users);
-  })
-  .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+const getUsers = async (req, res, next) => {
+  try {
+    const user = await User.find({});
+
+    res.status(200).send(user);
+  } catch (err) {
+    next(err);
+  }
+};
 
 // Получаем пользоватея по ID
-const getUser = (req, res) => {
+const getUser = (req, res, next) => {
   const { _id } = req.params;
   return User
     .findById(_id)
     .orFail(() => { throw new Error('Нет пользователя с таким _id'); })
     .then((user) => res.status(200).send({ user }))
     .catch((err) => {
-      if (err.message === 'Нет пользователя с таким _id') {
-        res.status(404).send({ message: 'Нет пользователя с таким _id' });
-      } else if (err.name === 'CastError') {
-        res.status(400).send({ message: 'Ошибка в ID пользователя' });
-      } else {
-        res.status(500).send({ message: 'Произошла ошибка' });
+      if (err.name === 'CastError') {
+        next(new BadRequest('Переданы некорректные данные'));
       }
+      if (err.message === 'NotFound') {
+        next(new NotFoundError(`Данный id: ${_id} не найден`));
+      }
+      next(err);
     });
 };
 
@@ -34,15 +43,9 @@ const createUser = (req, res, next) => {
     about,
     avatar,
     email,
-    password,
   } = req.body;
-  User.findOne({ email })
-    .then((user) => {
-      if (!user) {
-        Promise.reject(new Error('Неправильные почта или пароль'));
-      }
-    });
-  bcrypt.hash(password, 10) // хешируем пароль
+  bcrypt
+    .hash(req.body.password, 10)
     .then((hash) => User.create({
       name,
       about,
@@ -50,15 +53,23 @@ const createUser = (req, res, next) => {
       email,
       password: hash,
     }))
-    .then((user) => res.status(201).send(user))
+    .then(() => res.send({
+      data: {
+        name,
+        about,
+        avatar,
+        email,
+      },
+    }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Некорректные данные при создании пользователя.' });
+        next(new BadRequest(`Произошла ошибка: ${err} Переданы некорректные данные при создании пользователя`));
+      } else if (err.code === 11000) {
+        next(new ConflictError('Пользователь с таким email уже существует'));
       } else {
-        res.status(500).send({ message: 'Произошла ошибка' });
+        next(err);
       }
     });
-  next();
 };
 
 // Обновление профия
@@ -68,23 +79,13 @@ const updateUser = (req, res, next) => {
   User
     .findByIdAndUpdate(req.user._id, { name, about }, { new: true })
     .orFail(() => { throw new Error('Страница с профилем не найдена'); })
-    .then(({
-      name, about, avatar, _id,
-    }) => {
-      res.status(200).send({
-        name, about, avatar, _id,
-      });
-    })
+    .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
-        res.status(400).send({ message: 'Некорректные данные при обновлении профиля.' });
-      } else if (err.message === 'Страница с профилем не найдена') {
-        res.status(404).send({ message: 'Страница с профилем не найдена' });
-      } else {
-        res.status(500).send({ message: 'Произошла ошибка' });
+        next(new BadRequest('Введены некорректные данные!'));
       }
+      next(err);
     });
-  next();
 };
 
 // Обновление аватара
@@ -95,22 +96,12 @@ const updateUserAvatar = (req, res, next) => {
   return User
     .findByIdAndUpdate(_id, { avatar }, { new: true })
     .orFail(() => { throw new Error('Страница с аватаром не найдена'); })
-    .then(({
-      name, about, avatar, _id,
-    }) => {
-      res.status(200).send({
-        name, about, avatar, _id,
-      });
-    })
+    .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
-        res.status(400).send({ message: 'Некорректные данные при обновлении аватара.' });
-      } else if (err.message === 'Страница с аватаром не найдена') {
-        res.status(404).send({ message: 'Страница с аватаром не найдена' });
-      } else {
-        res.status(500).send({ message: 'Произошла ошибка' });
+        next(new BadRequest('Некорректные данные при обновлении аватара.'));
       }
-      next();
+      next(err);
     });
 };
 
@@ -149,10 +140,10 @@ const login = (req, res, next) => {
       if (err.name === 'ValidationError') {
         throw new Error('Поле email или password не должны быть пустыми');
       } else {
-        res.status(401).send({ message: 'Отказ в доступе' });
+        next(new UnauthorizedError('передан неверный логин или пароль.'));
       }
+      next(err);
     });
-  next();
 };
 
 module.exports = {

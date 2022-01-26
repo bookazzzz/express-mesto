@@ -9,9 +9,10 @@ const routes = require('./routes');
 const { createUser, login } = require('./controllers/users');
 const auth = require('./middlewares/auth');
 const centralError = require('./middlewares/centralError');
+const { validateUrl } = require('./method/validateUrl');
 
 const app = express();
-const regular = '^[a-zA-Z0-9]{8,}$';
+// const regular = '^[a-zA-Z0-9]{8,}$';
 
 app.post('/signin', celebrate({
   body: Joi.object().keys({
@@ -24,7 +25,7 @@ app.post('/signup', celebrate({
   body: Joi.object().keys({
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
-    avatar: Joi.string().pattern(new RegExp(regular)),
+    avatar: Joi.string().custom(validateUrl),
     email: Joi.string().required().email(),
     password: Joi.string().required().min(8),
   }),
