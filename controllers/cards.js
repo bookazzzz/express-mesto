@@ -10,8 +10,9 @@ const getCards = (req, res, next) => {
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new BadRequest('Переданы некорректные данные'));
+      } else {
+        next(err);
       }
-      next(err);
     });
 };
 
@@ -23,8 +24,9 @@ const createCard = (req, res, next) => {
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new BadRequest('Переданы некорректные данные'));
+      } else {
+        next(err);
       }
-      next(err);
     });
 };
 
@@ -42,23 +44,23 @@ const likeCard = (req, res, next) => {
         next(new NotFoundError('Запрашиваемый адрес не найден'));
       } else if (err.name === 'CastError') {
         next(new BadRequest('Oops не можем поставить лайк - ошибка 400'));
+      } else {
+        next(err);
       }
-      next(err);
     });
 };
 
 // Удаляем карточку
 const deleteCard = (req, res, next) => {
   Card.findByIdAndRemove(req.params.id)
-    .orFail(() => { throw new Error('NotFound'); })
+    .orFail(() => { throw new NotFoundError('Запрашиваемый адрес не найден'); })
     .then((card) => res.status(200).send(card))
     .catch((err) => {
-      if (err.message === 'NotFound') {
-        next(new NotFoundError('Запрашиваемый адрес не найден'));
-      } else if (err.name === 'CastError') {
+      if (err.name === 'CastError') {
         next(new BadRequest('Oops не можем удалить карточку - ошибка 400'));
+      } else {
+        next(err);
       }
-      next(err);
     });
 };
 
@@ -72,8 +74,9 @@ const dislikeCard = (req, res, next) => {
         next(new NotFoundError('Запрашиваемый адрес не найден'));
       } else if (err.name === 'CastError') {
         next(new BadRequest('Oops не можем удалить лайк - ошибка 400'));
+      } else {
+        next(err);
       }
-      next(err);
     });
 };
 

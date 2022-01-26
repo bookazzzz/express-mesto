@@ -78,13 +78,14 @@ const updateUser = (req, res, next) => {
 
   User
     .findByIdAndUpdate(req.user._id, { name, about }, { new: true })
-    .orFail(() => { throw new Error('Страница с профилем не найдена'); })
+    .orFail(() => { throw new Error('NotFound'); })
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
         next(new BadRequest('Введены некорректные данные!'));
+      } else {
+        next(err);
       }
-      next(err);
     });
 };
 
@@ -100,8 +101,9 @@ const updateUserAvatar = (req, res, next) => {
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
         next(new BadRequest('Некорректные данные при обновлении аватара.'));
+      } else {
+        next(err);
       }
-      next(err);
     });
 };
 
@@ -112,12 +114,12 @@ const login = (req, res, next) => {
   User.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
-        throw new Error('Неправильные почта или пароль');
+        next(new UnauthorizedError('передан неверный логин или пароль.'));
       }
       return bcrypt.compare(password, user.password)
         .then((matched) => {
           if (!matched) {
-            throw new Error('Неправильные почта или пароль');
+            next(new UnauthorizedError('передан неверный логин или пароль.'));
           }
 
           const { NODE_ENV, JWT_SECRET } = process.env;
@@ -138,11 +140,10 @@ const login = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        throw new Error('Поле email или password не должны быть пустыми');
+        next(new BadRequest('Некорректные данные в email или password.'));
       } else {
-        next(new UnauthorizedError('передан неверный логин или пароль.'));
+        next(err);
       }
-      next(err);
     });
 };
 
