@@ -23,16 +23,16 @@ const getUser = (req, res, next) => {
   const { _id } = req.params;
   return User
     .findById(_id)
-    .orFail(() => { throw new Error('Нет пользователя с таким _id'); })
+    .orFail(() => { throw new Error('NotFound'); })
     .then((user) => res.status(200).send({ user }))
     .catch((err) => {
       if (err.name === 'CastError') {
         next(new BadRequest('Переданы некорректные данные'));
-      }
-      if (err.message === 'NotFound') {
+      } else if (err.message === 'NotFound') {
         next(new NotFoundError(`Данный id: ${_id} не найден`));
+      } else {
+        next(err);
       }
-      next(err);
     });
 };
 
@@ -84,7 +84,7 @@ const updateUser = (req, res, next) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
         next(new BadRequest('Введены некорректные данные!'));
       } else {
-        next(err);
+        next(new NotFoundError('Нет пользователя с таким _id'));
       }
     });
 };
@@ -102,7 +102,7 @@ const updateUserAvatar = (req, res, next) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
         next(new BadRequest('Некорректные данные при обновлении аватара.'));
       } else {
-        next(err);
+        next(new NotFoundError('Нет пользователя с таким _id'));
       }
     });
 };
