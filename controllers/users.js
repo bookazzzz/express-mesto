@@ -83,8 +83,10 @@ const updateUser = (req, res, next) => {
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
         next(new BadRequest('Введены некорректные данные!'));
-      } else {
+      } else if (err.message === 'NotFound') {
         next(new NotFoundError('Нет пользователя с таким _id'));
+      } else {
+        next(err);
       }
     });
 };
@@ -96,13 +98,15 @@ const updateUserAvatar = (req, res, next) => {
 
   return User
     .findByIdAndUpdate(_id, { avatar }, { new: true })
-    .orFail(() => { throw new Error('Страница с аватаром не найдена'); })
+    .orFail(() => { throw new Error('NotFound'); })
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
         next(new BadRequest('Некорректные данные при обновлении аватара.'));
-      } else {
+      } else if (err.message === 'NotFound') {
         next(new NotFoundError('Нет пользователя с таким _id'));
+      } else {
+        next(err);
       }
     });
 };
